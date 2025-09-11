@@ -6,6 +6,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import crypto from "node:crypto";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
@@ -31,14 +32,28 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+
+  const isDev = process.env.NODE_ENV !== "production";
+  const resolvedSecret = process.env.SESSION_SECRET || (isDev
+    ? crypto.randomBytes(32).toString("hex")
+    : undefined);
+
+  if (!resolvedSecret) {
+    throw new Error("SESSION_SECRET not set. Configure it in environment.");
+  }
+
+  if (isDev && !process.env.SESSION_SECRET) {
+    console.warn("Warning: Using auto-generated SESSION_SECRET for development. Sessions will reset on restart.");
+  }
+
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: resolvedSecret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: "auto", // works with trust proxy on Replit & local dev
       maxAge: sessionTtl,
     },
   });
