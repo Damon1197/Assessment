@@ -15,6 +15,8 @@ import AssessmentExecution from "@/pages/assessment-execution";
 import UserManagement from "@/pages/user-management";
 import Analytics from "@/pages/analytics";
 import CodeEditorPage from "@/pages/code-editor";
+import AIGeneratorPage from "@/pages/ai-generator";
+import ProctoringPage from "@/pages/proctoring";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -57,6 +59,8 @@ function Router() {
           <Route path="/users" component={UserManagement} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/code-editor" component={CodeEditorPage} />
+          <Route path="/ai-generator" component={AIGeneratorPage} />
+          <Route path="/proctoring" component={ProctoringPage} />
         </>
       )}
       <Route component={NotFound} />
