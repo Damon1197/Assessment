@@ -2,8 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { generateQuestions, improveQuestionQuality, generateQuestionFeedback } from "./services/openai";
+import { generateQuestions, improveQuestionQuality, generateQuestionFeedback } from "./services/gemini";
 import { codeExecutionService } from "./services/codeExecution";
+import { ProctoringService } from "./services/proctoring";
 import {
   insertSkillSchema,
   insertTopicSchema,
@@ -537,6 +538,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to execute code", error: (error as Error).message });
       }
+    }
+  });
+
+  // Admin dashboard routes for proctoring
+  app.get('/api/proctoring/sessions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userRole = req.user.claims.role || 'candidate';
+      if (!['super_admin', 'manager_hr', 'sme'].includes(userRole)) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+      
+      const sessions = ProctoringService.getAllActiveSessions();
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching proctoring sessions:", error);
+      res.status(500).json({ message: 'Failed to fetch sessions' });
+    }
+  });
+
+  app.get('/api/proctoring/violations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userRole = req.user.claims.role || 'candidate';
+      if (!['super_admin', 'manager_hr', 'sme'].includes(userRole)) {
+        return res.status(403).json({ message: "Insufficient permissions" });
+      }
+      
+      const violations = ProctoringService.getAllViolations();
+      res.json(violations);
+    } catch (error) {
+      console.error("Error fetching violations:", error);
+      res.status(500).json({ message: 'Failed to fetch violations' });
+    }
+  });
+
+  // Proctoring API routes
+  app.post('/api/proctoring/start', isAuthenticated, async (req: any, res) => {
+    try {
+      const { assignmentId } = req.body;
+      const candidateId = req.user.claims.sub;
+      
+      if (!assignmentId) {
+        return res.status(400).json({ message: "Assignment ID is required" });
+      }
+      
+      const session = await ProctoringService.startProctoringSession(assignmentId, candidateId);
+      res.json({ sessionId: session.id, session });
+    } catch (error) {
+      console.error("Error starting proctoring session:", error);
+      res.status(500).json({ message: "Failed to start proctoring session" });
+    }
+  });
+
+  app.post('/api/proctoring/:sessionId/end', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      await ProctoringService.endProctoringSession(sessionId);
+      res.json({ message: "Proctoring session ended successfully" });
+    } catch (error) {
+      console.error("Error ending proctoring session:", error);
+      res.status(500).json({ message: "Failed to end proctoring session" });
+    }
+  });
+
+  app.post('/api/proctoring/:sessionId/analyze-frame', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { imageData } = req.body;
+      
+      if (!imageData) {
+        return res.status(400).json({ message: "Image data is required" });
+      }
+      
+      const result = await ProctoringService.analyzeWebcamFrame(sessionId, imageData);
+      res.json(result);
+    } catch (error) {
+      console.error("Error analyzing webcam frame:", error);
+      res.status(500).json({ message: "Failed to analyze webcam frame" });
+    }
+  });
+
+  app.post('/api/proctoring/:sessionId/report-event', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { eventType, details } = req.body;
+      
+      await ProctoringService.reportBrowserEvent(sessionId, eventType, details);
+      res.json({ message: "Event reported successfully" });
+    } catch (error) {
+      console.error("Error reporting browser event:", error);
+      res.status(500).json({ message: "Failed to report event" });
+    }
+  });
+
+  app.get('/api/proctoring/:sessionId/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const session = ProctoringService.getSession(sessionId);
+      
+      if (!session) {
+        return res.status(404).json({ message: "Proctoring session not found" });
+      }
+      
+      res.json(session);
+    } catch (error) {
+      console.error("Error getting proctoring status:", error);
+      res.status(500).json({ message: "Failed to get proctoring status" });
+    }
+  });
+
+  app.get('/api/proctoring/:sessionId/violations', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const violations = ProctoringService.getViolations(sessionId);
+      res.json(violations);
+    } catch (error) {
+      console.error("Error getting violations:", error);
+      res.status(500).json({ message: "Failed to get violations" });
+    }
+  });
+
+  app.post('/api/proctoring/check-plagiarism', isAuthenticated, async (req: any, res) => {
+    try {
+      const { code, language, questionId } = req.body;
+      
+      if (!code || !language) {
+        return res.status(400).json({ message: "Code and language are required" });
+      }
+      
+      const result = await ProctoringService.detectPlagiarism(code, language, questionId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error checking plagiarism:", error);
+      res.status(500).json({ message: "Failed to check plagiarism" });
     }
   });
 

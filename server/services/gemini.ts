@@ -1,8 +1,12 @@
-import OpenAI from "openai";
+// DON'T DELETE THIS COMMENT
+// Follow these instructions when using this blueprint:
+// - Note that the newest Gemini model series is "gemini-2.5-flash" or gemini-2.5-pro"
+//   - do not change this unless explicitly requested by the user
 
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
-});
+import { GoogleGenAI } from "@google/genai";
+
+// This API key is from Gemini Developer API Key, not vertex AI API Key
+const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY || "" });
 
 export interface GenerateQuestionsRequest {
   skill: string;
@@ -139,27 +143,46 @@ export async function generateQuestions(request: GenerateQuestionsRequest): Prom
         break;
     }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert assessment creator specializing in technical skills evaluation. 
+    const systemPrompt = `You are an expert assessment creator specializing in technical skills evaluation. 
           Generate high-quality, professional questions that accurately assess the specified skill level. 
           Ensure questions are clear, unambiguous, and test practical knowledge.
-          Always respond with valid JSON format.`
-        },
+          Always respond with valid JSON format.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: [
         {
-          role: "user",
-          content: prompt
+          role: "user", 
+          parts: [{ text: `${systemPrompt}\n\n${prompt}` }]
         }
       ],
-      response_format: { type: "json_object" },
-      max_tokens: 4000,
-      temperature: 0.7,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            questions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  content: { type: "object" },
+                  correctAnswer: {},
+                  explanation: { type: "string" },
+                  timeLimit: { type: "number" }
+                },
+                required: ["title", "description", "content"]
+              }
+            }
+          },
+          required: ["questions"]
+        }
+      }
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = JSON.parse(response.text || "{}");
     return result.questions || [];
 
   } catch (error) {
@@ -187,24 +210,33 @@ export async function improveQuestionQuality(question: any): Promise<any> {
 
     Return the improved question in the same JSON format.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert in educational assessment and question quality improvement."
-        },
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: [
         {
           role: "user",
-          content: prompt
+          parts: [{ text: `You are an expert in educational assessment and question quality improvement.\n\n${prompt}` }]
         }
       ],
-      response_format: { type: "json_object" },
-      max_tokens: 2000,
-      temperature: 0.3,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            description: { type: "string" },
+            type: { type: "string" },
+            difficulty: { type: "string" },
+            content: { type: "object" },
+            correctAnswer: {},
+            explanation: { type: "string" },
+            timeLimit: { type: "number" }
+          }
+        }
+      }
     });
 
-    return JSON.parse(response.choices[0].message.content || "{}");
+    return JSON.parse(response.text || "{}");
 
   } catch (error) {
     console.error("Error improving question quality:", error);
@@ -230,23 +262,17 @@ export async function generateQuestionFeedback(question: any, answer: any, isCor
 
     Return only the feedback text.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful tutor providing constructive feedback on assessment answers."
-        },
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: [
         {
           role: "user",
-          content: prompt
+          parts: [{ text: `You are a helpful tutor providing constructive feedback on assessment answers.\n\n${prompt}` }]
         }
-      ],
-      max_tokens: 500,
-      temperature: 0.7,
+      ]
     });
 
-    return response.choices[0].message.content || "Good effort! Keep practicing to improve your skills.";
+    return response.text || "Good effort! Keep practicing to improve your skills.";
 
   } catch (error) {
     console.error("Error generating feedback:", error);
