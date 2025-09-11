@@ -1,0 +1,125 @@
+# Requirements Document
+
+## Introduction
+
+The Assessment Platform is a scalable, role-based online evaluation system designed to assess candidates on core engineering skills, enterprise skills, and software proficiency. The platform supports multiple assessment types including coding challenges, simulations, and file-based evaluations, with both manual and AI-generated questions. It features adaptive testing capabilities, AI proctoring, and comprehensive analytics reporting across four distinct user roles: Super Admin, SME/Faculty, Candidate, and Manager/HR.
+
+## Requirements
+
+### Requirement 1: Role-Based Authentication and Access Control
+
+**User Story:** As a platform user, I want secure role-based access so that I can only access features and data appropriate to my role and responsibilities.
+
+#### Acceptance Criteria
+
+1. WHEN a user attempts to log in THEN the system SHALL authenticate them using secure credentials with optional SSO integration
+2. WHEN authentication is successful THEN the system SHALL redirect users to a role-specific dashboard
+3. WHEN a user tries to access unauthorized features THEN the system SHALL deny access and display appropriate error messages
+4. IF a user session expires THEN the system SHALL automatically log them out and require re-authentication
+
+### Requirement 2: Question Bank Management System
+
+**User Story:** As an SME, I want to create and manage questions manually or through AI generation so that I can build comprehensive assessment content for different skills and difficulty levels.
+
+#### Acceptance Criteria
+
+1. WHEN an SME creates a manual question THEN the system SHALL allow specification of type, topic, difficulty level, and skill category
+2. WHEN an SME uploads documents or provides links THEN the AI system SHALL generate relevant questions for SME review
+3. WHEN questions are created THEN the system SHALL route them through an approval workflow to Super Admin
+4. WHEN Super Admin approves questions THEN the system SHALL add them to the live question bank
+5. IF questions are rejected THEN the system SHALL provide feedback and allow revisions
+
+### Requirement 3: Assessment Creation and Scheduling
+
+**User Story:** As a Manager/HR, I want to create and schedule assessments for candidates so that I can evaluate their skills according to specific requirements and timelines.
+
+#### Acceptance Criteria
+
+1. WHEN creating an assessment THEN the system SHALL allow selection of candidates, topics, and difficulty levels
+2. WHEN configuring assessment mode THEN the system SHALL support both adaptive and fixed question selection
+3. WHEN scheduling assessments THEN the system SHALL support both proctored and non-proctored modes
+4. WHEN setting time parameters THEN the system SHALL enforce assessment duration limits
+5. IF scheduling conflicts occur THEN the system SHALL notify users and suggest alternatives
+
+### Requirement 4: Multi-Modal Assessment Execution
+
+**User Story:** As a candidate, I want to take assessments using appropriate tools and interfaces so that I can demonstrate my skills effectively across different domains.
+
+#### Acceptance Criteria
+
+1. WHEN taking coding assessments (Embedded C, Python, MATLAB) THEN the system SHALL provide online code editors with sandbox execution
+2. WHEN taking scenario-based assessments (CAPL, AUTOSAR, QNX) THEN the system SHALL provide simulation environments or configuration file interfaces
+3. WHEN taking CAD assessments THEN the system SHALL support file upload with automated geometry and constraint validation
+4. WHEN taking enterprise skill assessments THEN the system SHALL provide appropriate editors (SQL editor, web development environment)
+5. WHEN submitting answers THEN the system SHALL automatically evaluate and score responses where possible
+
+### Requirement 5: Adaptive Testing Engine
+
+**User Story:** As a candidate, I want the assessment difficulty to adapt to my performance so that the evaluation accurately reflects my skill level.
+
+#### Acceptance Criteria
+
+1. WHEN a candidate answers questions correctly THEN the system SHALL increase difficulty for subsequent questions
+2. WHEN a candidate struggles with questions THEN the system SHALL decrease difficulty to find appropriate skill level
+3. WHEN adaptive mode is enabled THEN the system SHALL dynamically select questions based on performance patterns
+4. WHEN sufficient data is collected THEN the system SHALL classify the candidate's skill level accurately
+
+### Requirement 6: AI Proctoring and Assessment Integrity
+
+**User Story:** As a Manager/HR, I want AI-powered proctoring during assessments so that I can ensure assessment integrity and prevent cheating.
+
+#### Acceptance Criteria
+
+1. WHEN proctored mode is enabled THEN the system SHALL activate webcam monitoring with AI analysis
+2. WHEN suspicious behavior is detected THEN the system SHALL flag incidents and notify administrators
+3. WHEN assessments begin THEN the system SHALL implement browser lockdown to prevent external access
+4. WHEN screen sharing or switching is detected THEN the system SHALL record violations and alert proctors
+5. IF plagiarism is suspected THEN the system SHALL run automated plagiarism checks on submitted code
+
+### Requirement 7: Comprehensive Reporting and Analytics
+
+**User Story:** As a Super Admin, I want detailed analytics and reporting so that I can monitor platform performance, SME contributions, and assessment outcomes.
+
+#### Acceptance Criteria
+
+1. WHEN assessments are completed THEN the system SHALL generate candidate skill-level classification reports
+2. WHEN SMEs contribute content THEN the system SHALL track manual vs AI question creation and approval rates
+3. WHEN managers request reports THEN the system SHALL provide skill-gap analysis for their candidates
+4. WHEN Super Admin accesses analytics THEN the system SHALL display overall platform usage and performance metrics
+5. IF reporting data is requested THEN the system SHALL export reports in multiple formats (PDF, CSV, Excel)
+
+### Requirement 8: Sandbox Execution and Tool Integration
+
+**User Story:** As a candidate taking technical assessments, I want secure code execution environments so that I can test and validate my solutions in real-time.
+
+#### Acceptance Criteria
+
+1. WHEN executing code THEN the system SHALL use isolated Docker containers for security
+2. WHEN running different languages THEN the system SHALL support appropriate execution engines (Judge0, Octave, custom VMs)
+3. WHEN code execution completes THEN the system SHALL return results, output, and error messages
+4. WHEN resource limits are exceeded THEN the system SHALL terminate execution and provide appropriate feedback
+5. IF execution environments fail THEN the system SHALL provide fallback options or error recovery
+
+### Requirement 9: SME Contribution Tracking and Management
+
+**User Story:** As a Super Admin, I want to track SME contributions and performance so that I can manage content quality and contributor engagement.
+
+#### Acceptance Criteria
+
+1. WHEN SMEs create questions THEN the system SHALL log creation timestamps, topics, and difficulty levels
+2. WHEN questions are approved or rejected THEN the system SHALL track approval rates by SME
+3. WHEN SMEs review AI-generated content THEN the system SHALL record review decisions and feedback
+4. WHEN generating SME reports THEN the system SHALL include contribution metrics and quality scores
+5. IF SME performance issues are identified THEN the system SHALL provide alerts and recommendations
+
+### Requirement 10: Platform Scalability and Performance
+
+**User Story:** As a Super Admin, I want the platform to handle concurrent users and assessments so that it can scale with organizational growth.
+
+#### Acceptance Criteria
+
+1. WHEN multiple candidates take assessments simultaneously THEN the system SHALL maintain performance standards
+2. WHEN sandbox execution load increases THEN the system SHALL implement load balancing across containers
+3. WHEN database queries increase THEN the system SHALL optimize performance through indexing and caching
+4. WHEN system resources are constrained THEN the system SHALL implement queuing and resource management
+5. IF performance degrades THEN the system SHALL provide monitoring alerts and auto-scaling capabilities
