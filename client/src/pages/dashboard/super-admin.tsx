@@ -451,7 +451,7 @@ export default function SuperAdminDashboard() {
                             ? 'bg-chart-2/10 text-chart-2'
                             : 'bg-chart-3/10 text-chart-3'
                         }`}>
-                          {question.type.replace('_', ' ')}
+                          {question.type ? question.type.replace('_', ' ') : 'Unknown'}
                         </span>
                         <span className={`text-xs px-2 py-1 rounded-full ${
                           question.difficulty === 'easy'

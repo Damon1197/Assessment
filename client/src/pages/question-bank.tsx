@@ -31,17 +31,17 @@ export default function QuestionBank() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
 
-  const { data: questions, isLoading: questionsLoading } = useQuery({
+  const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ["/api/questions", filters],
     retry: false,
   });
 
-  const { data: skills, isLoading: skillsLoading } = useQuery({
+  const { data: skills = [], isLoading: skillsLoading } = useQuery({
     queryKey: ["/api/skills"],
     retry: false,
   });
 
-  const { data: topics } = useQuery({
+  const { data: topics = [] } = useQuery({
     queryKey: ["/api/skills", filters.skillId, "topics"],
     enabled: !!filters.skillId,
     retry: false,
@@ -141,7 +141,7 @@ export default function QuestionBank() {
     },
   });
 
-  const filteredQuestions = questions?.filter((question: any) => {
+  const filteredQuestions = questions.filter((question: any) => {
     if (filters.search && !question.title.toLowerCase().includes(filters.search.toLowerCase()) &&
         !question.description.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
@@ -174,7 +174,7 @@ export default function QuestionBank() {
                     <DialogTitle>AI Question Generator</DialogTitle>
                   </DialogHeader>
                   <AIGenerator
-                    skills={skills || []}
+                    skills={skills}
                     onGenerated={() => {
                       queryClient.invalidateQueries({ queryKey: ["/api/questions"] });
                       setIsAIDialogOpen(false);
@@ -193,7 +193,7 @@ export default function QuestionBank() {
                     <DialogTitle>Create New Question</DialogTitle>
                   </DialogHeader>
                   <QuestionForm
-                    skills={skills || []}
+                    skills={skills}
                     onSubmit={(data) => createQuestionMutation.mutate(data)}
                     isLoading={createQuestionMutation.isPending}
                   />
